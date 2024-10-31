@@ -115,6 +115,10 @@ spec:
                   title: Quay Repository Name
                   type: string
                   description: The Quay Repository Name of the published workflow. The repository must exist before deploying the gitops.
+                quayCreateNewRepo:
+                  title: Create New Repository on Quay
+                  type: boolean
+                  description: Indicator to create a new quay repository. The repository does not have to exist before deploying the gitops.
                 persistencePSQLSecretName:
                   title: PostgreSQL Secret Name
                   type: string
@@ -162,7 +166,67 @@ spec:
                 - persistencePSQLServiceNamespace
                 - persistencePSQLServicePort
                 - persistencePSQLDatabaseName
+              dependencies:
+                quayCreateNewRepo:
+                  oneOf:
+                    - properties:
+                        quayCreateNewRepo:
+                          const: false
+                    - properties:
+                        quayCreateNewRepo:
+                          const: true
+                        name:
+                          title: Repository name
+                          type: string
+                          description: Name of the repository to be created
+                        token:
+                          title: AuthToken
+                          type: string
+                          description: Bearer token used for authorization
+                          ui:widget: password
+                        visibility:
+                          title: Visiblity
+                          type: string
+                          description: Visibility setting for the created repository, either public or private
+                          ui:widget: select
+                          enum: ["public", "private"]
+                        repoKind:
+                          title: Repository kind
+                          type: string
+                          description: The created repository kind either image, application or none
+                          ui:widget: select
+                          enum: ["image", "application"]
+                        description:
+                          title: Description
+                          type: string
+                          description: The repository desription
+                        namespace:
+                          title: Namespace
+                          type: string
+                          description: The users namespace is used by default
+                        baseUrl:
+                          title: Base URL
+                          type: string
+                          description: URL of your quay instance, set to "https://quay.io" by default
+                      required:
+                        - name
+                        - visibility
+                        - description
+                        - token
+
   steps:
+    - id: createQuayRepository
+      name: Create Quay Repository
+      action: quay:create-repository
+      if: ${{ parameters.quayCreateNewRepo == true }}
+      inputs:
+        baseUrl: ${{ parameters.baseUrl }}
+        token: ${{ parameters.token }}
+        name: ${{ parameters.name }}
+        visibility: ${{ parameters.visibility }}
+        description: ${{ parameters.description }}
+        namespace: ${{ parameters.namespace }}
+        repoKind: ${{ parameters.repoKind }}
     - id: workflowCodeTemplate
       name: Generating the Workflow Source Code and Catalog Info Component
       action: fetch:template
@@ -300,3 +364,6 @@ spec:
       - title: Open the Catalog Info Component
         icon: catalog
         entityRef: ${{ steps.register.output.entityRef }}
+      - if: ${{ parameters.quayCreateNewRepo == true }}
+        title: Quay repository link
+        url: ${{ steps['createQuayRepository'].output.repositoryUrl }}
