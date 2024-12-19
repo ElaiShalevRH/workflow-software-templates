@@ -342,7 +342,7 @@ spec:
       action: fetch:template
       if: ${{ parameters.CI == 'tekton_argocd' }}
       input:
-        url: ./
+        url: ../build/
         copyWithoutTemplating:
           - .gitlab-ci.yml
         values:
@@ -373,6 +373,7 @@ spec:
         projectId: ${{ parameters.orgName }}/${{ parameters.repoName }}
         repoUrl: ${{ parameters.gitlabHost }}?owner=${{ parameters.orgName }}&repo=${{ parameters.repoName }}
         name: PROJECT_ACCESS_TOKEN
+        expiresAt: "2025-01-01"
         scopes:
           [api, read_api, create_runner, read_repository, write_repository]
 
