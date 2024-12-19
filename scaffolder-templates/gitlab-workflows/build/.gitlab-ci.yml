@@ -12,8 +12,8 @@ wait_for_populated_variable:
     sleep 5
 
 update_pipelinerun:
-  # tags:
-  #  - shared-podman 
+  tags:
+    - shared-podman 
   stage: update
   image: ubuntu:latest
   script: |
